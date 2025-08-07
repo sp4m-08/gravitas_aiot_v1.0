@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config();
+//require('dotenv').config();
 
 const app = express();
 const port = 3000;
@@ -11,7 +11,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 //initialising gemini api
-const apikey = '' //replace with gemini api key ' '
+const apikey = 'AIzaSyCok3rpe8lu5QruBF5J0fBlP28yFClqYIA' //replace with gemini api key ' '
 const genAI = new GoogleGenerativeAI(apikey); 
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 console.log("Attempting to use API Key:",apikey); 
