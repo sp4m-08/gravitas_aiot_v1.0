@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voice → Health AI</title>
+    <style>
+        body {
+            font-family: system-ui, Arial;
+            margin: 16px;
+        }
+
+        button {
+            padding: 12px 16px;
+            font-size: 16px;
+            border-radius: 10px;
+            margin-right: 8px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .ok {
+            color: green;
+        }
+
+        .err {
+            color: #b00020;
+        }
+
+        #status {
+            margin-left: 8px;
+        }
+
+        #sensor pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        #textQuery {
+            width: 70%;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>🎤 Voice + Keyboard → Health AI</h2>
+
+    <div class="card">
+        <button id="btn">Start Speaking</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <span id="status"></span>
+
+        <p><strong>Transcript:</strong> <span id="transcript">—</span></p>
+
+        <!-- 🆕 Text input for manual query -->
+        <div style="margin-top: 10px;">
+            <input id="textQuery" type="text" placeholder="Type your question…" />
+            <button id="sendBtn">Send</button>
+        </div>
+
+        <p><strong>AI Reply:</strong></p>
+        <div id="reply" class="card"></div>
+    </div>
+
+    <div id="sensor" class="card">
+        <h3>Latest Sensor Data</h3>
+        <pre id="sensorJson">Loading…</pre>
+    </div>
+
+    <script>
+        const btn = document.getElementById('btn');
+        const stopBtn = document.getElementById('stopBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusEl = document.getElementById('status');
+        const transcriptEl = document.getElementById('transcript');
+        const replyEl = document.getElementById('reply');
+        const sensorJsonEl = document.getElementById('sensorJson');
+        const textInput = document.getElementById('textQuery');
+
+        let recognition = null;
+
+        // Poll sensor data every 3s so users can see what AI will use
+        async function refreshSensor() {
+            try {
+                const r = await fetch('/api/data');
+                const j = await r.json();
+                sensorJsonEl.textContent = JSON.stringify(j, null, 2);
+            } catch (e) {
+                sensorJsonEl.textContent = 'Error loading sensor data';
+            }
+        }
+        refreshSensor();
+        setInterval(refreshSensor, 3000);
+
+        function browserSupportsSpeech() {
+            return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+        }
+
+        async function askAI(query) {
+            const r = await fetch('/api/ask-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            if (!r.ok) {
+                const j = await r.json().catch(() => ({}));
+                throw new Error(j.error || `HTTP ${r.status}`);
+            }
+            const j = await r.json();
+            return j.response || '';
+        }
+
+        // === Voice input ===
+        btn.onclick = async () => {
+            replyEl.textContent = '';
+            transcriptEl.textContent = '—';
+
+            if (!browserSupportsSpeech()) {
+                statusEl.textContent = '';
+                alert('Your browser does not support SpeechRecognition. Use Chrome/Edge on Android.');
+                return;
+            }
+
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                statusEl.textContent = 'Listening…';
+                statusEl.className = 'ok';
+                btn.disabled = true;
+                stopBtn.disabled = false;
+            };
+            recognition.onerror = (e) => {
+                statusEl.textContent = `Error: ${e.error}`;
+                statusEl.className = 'err';
+                btn.disabled = false;
+                stopBtn.disabled = true;
+            };
+            recognition.onend = () => {
+                if (statusEl.textContent.startsWith('Listening')) {
+                    statusEl.textContent = 'Stopped';
+                }
+                btn.disabled = false;
+                stopBtn.disabled = true;
+            };
+            recognition.onresult = async (ev) => {
+                const text = ev.results[0][0].transcript;
+                transcriptEl.textContent = text;
+                statusEl.textContent = 'Thinking…';
+                try {
+                    const ai = await askAI(text);
+                    replyEl.textContent = ai;
+                    statusEl.textContent = 'Done';
+                    statusEl.className = 'ok';
+                } catch (err) {
+                    replyEl.textContent = `Failed: ${err.message}`;
+                    statusEl.textContent = 'Failed';
+                    statusEl.className = 'err';
+                }
+            };
+
+            recognition.start();
+        };
+
+        stopBtn.onclick = () => {
+            if (recognition) {
+                recognition.stop();
+                statusEl.textContent = 'Stopped manually';
+                stopBtn.disabled = true;
+                btn.disabled = false;
+            }
+        };
+
+        // === 🆕 Handle text query ===
+        sendBtn.onclick = async () => {
+            const query = textInput.value.trim();
+            if (!query) return;
+            transcriptEl.textContent = query;
+            replyEl.textContent = '';
+            statusEl.textContent = 'Thinking…';
+
+            try {
+                const ai = await askAI(query);
+                replyEl.textContent = ai;
+                statusEl.textContent = 'Done';
+                statusEl.className = 'ok';
+            } catch (err) {
+                replyEl.textContent = `Failed: ${err.message}`;
+                statusEl.textContent = 'Failed';
+                statusEl.className = 'err';
+            }
+        };
+    </script>
+</body>
+
+</html>
