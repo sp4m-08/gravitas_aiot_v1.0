@@ -10,11 +10,11 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// ---- Serve the voice UI (public folder) ----
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---- Gemini init (your key is hardcoded; consider env var for production) ----
-const apikey = 'AIzaSyCok3rpe8lu5QruBF5J0fBlP28yFClqYIA';
+
+const apikey = '';
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 console.log("Attempting to use API Key:",apikey); 
@@ -22,7 +22,6 @@ console.log("Attempting to use API Key:",apikey);
 let latestData = {};
 let lastAIResponse = "";
 
-// ---- ESP posts sensor data here ----
 
 app.get('/', (req, res) => {
     res.status(200).send('Server running!');
@@ -34,11 +33,11 @@ app.post('/api/data', (req, res) => {
 });
 
 // Optional: allow page/ESP to read the latest sensor data
-app.get('/api/data', (req, res) => {
-  res.json(latestData || {});
-});
+// app.get('/api/data', (req, res) => {
+//   res.json(latestData || {});
+// });
 
-// ---- Browser (or anything) posts user query here; AI uses latestData ----
+
 app.post('/api/ask-ai', async (req, res) => {
   const userQuery = (req.body && req.body.query) ? String(req.body.query) : "";
 
@@ -49,7 +48,8 @@ app.post('/api/ask-ai', async (req, res) => {
     return res.status(400).send({ error: 'Empty query' });
   }
 
-  const prompt = `You are a health assistant AI. Here is the user health data:
+  //prompt template can be customised to anything
+  const prompt = `You are a health assistant AI. Here is the user health data:  
 - Heart Rate: ${latestData.heartRate}
 - SpO₂: ${latestData.spo2}
 - Temp: ${latestData.temperature}°C
@@ -63,7 +63,7 @@ Provide a helpful and concise response based on this health context.`;
   try {
     const result = await model.generateContent(prompt);
 
-    // Safer extraction
+    
     const response = result?.response;
     const text = typeof response?.text === 'function'
       ? response.text()
@@ -78,12 +78,11 @@ Provide a helpful and concise response based on this health context.`;
   }
 });
 
-// Optional: let ESP (or the page) fetch last AI answer
 app.get('/api/last-ai', (req, res) => {
   res.json({ response: lastAIResponse || "" });
 });
 
-// Fallback to index.html for root
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
