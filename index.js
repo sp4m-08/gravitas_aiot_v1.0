@@ -33,9 +33,9 @@ app.post('/api/data', (req, res) => {
 });
 
 // Optional: allow page/ESP to read the latest sensor data
-// app.get('/api/data', (req, res) => {
-//   res.json(latestData || {});
-// });
+app.get('/api/data', (req, res) => {
+  res.json(latestData || {});
+});
 
 
 app.post('/api/ask-ai', async (req, res) => {
@@ -87,7 +87,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server running at http://0.0.0.0:${port}`);
+app.listen(port, "localhost", () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
 
