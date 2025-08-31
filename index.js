@@ -26,19 +26,19 @@ let lastAIResponse = "";
 app.get('/', (req, res) => {
     res.status(200).send('Server running!');
 })
-app.post('/api/data', (req, res) => {
+app.post('/data', (req, res) => {
   latestData = req.body || {};
   console.log('Received sensor data:', latestData);
   res.status(200).send('Data received');
 });
 
 // Optional: allow page/ESP to read the latest sensor data
-app.get('/api/data', (req, res) => {
+app.get('/data', (req, res) => {
   res.json(latestData || {});
 });
 
 
-app.post('/api/ask-ai', async (req, res) => {
+app.post('/ask-ai', async (req, res) => {
   const userQuery = (req.body && req.body.query) ? String(req.body.query) : "";
 
   if (!latestData || Object.keys(latestData).length === 0) {
@@ -78,7 +78,7 @@ Provide a helpful and concise response based on this health context.`;
   }
 });
 
-app.get('/api/last-ai', (req, res) => {
+app.get('/last-ai', (req, res) => {
   res.json({ response: lastAIResponse || "" });
 });
 
@@ -87,7 +87,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, "localhost", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server running at http://localhost:${port}`);
 });
 

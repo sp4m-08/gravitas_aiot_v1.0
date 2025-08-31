@@ -9,63 +9,110 @@
         body {
             font-family: system-ui, Arial;
             margin: 16px;
+            background-color: #121212;
+            /* Dark background */
+            color: #e0e0e0;
+            /* Light gray text */
         }
-
+    
         button {
             padding: 12px 16px;
             font-size: 16px;
             border-radius: 10px;
             margin-right: 8px;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
         }
-
+    
+        button:hover {
+            background: #2a2a2a;
+        }
+    
+        button:active {
+            transform: scale(0.97);
+        }
+    
         .card {
-            border: 1px solid #ddd;
+            border: 1px solid #2c2c2c;
             border-radius: 12px;
-            padding: 12px;
+            padding: 16px;
+            padding-bottom: 20px;
             margin-top: 12px;
+            background: #1a1a1a;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
         }
-
+    
         .ok {
-            color: green;
+            color: #4caf50;
+           
         }
-
+    
         .err {
-            color: #b00020;
+            color: #ff5252;
+            
         }
-
+    
         #status {
             margin-left: 8px;
+            font-weight: bold;
         }
-
+    
         #sensor pre {
             margin: 0;
             white-space: pre-wrap;
+            color: #b0b0b0;
         }
-
+    
         #textQuery {
             width: 70%;
-            padding: 8px;
+            padding: 10px;
             font-size: 16px;
             border-radius: 8px;
-            border: 1px solid #ccc;
+            border: 1px solid #333;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            outline: none;
+            transition: border 0.2s;
         }
+    
+        #textQuery:focus {
+            border: 1px solid #4caf50;
+        }
+    
+        h2,
+        h3 {
+            color: #ffffff;
+        }
+    
+        strong {
+            color: #ffffff;
+        }
+        .button{
+            margin-top:10px;
+        }
+        
     </style>
+
 </head>
 
 <body>
     <h2>🎤 Voice + Keyboard → Health AI</h2>
 
     <div class="card">
-        <button id="btn">Start Speaking</button>
-        <button id="stopBtn" disabled>Stop</button>
+        <button id="btn" class="button">Start Speaking</button>
+        <button id="stopBtn" class="button" disabled>Stop Listening</button>
+        <button id="stopSpeakBtn" class="button">Stop Speaking</button>
         <span id="status"></span>
 
         <p><strong>Transcript:</strong> <span id="transcript">—</span></p>
 
-        <!-- 🆕 Text input for manual query -->
-        <div style="margin-top: 10px;">
+        
+        <div style="margin-top: 30px;">
             <input id="textQuery" type="text" placeholder="Type your question…" />
-            <button id="sendBtn">Send</button>
+            <button id="sendBtn" style="margin-top: 10px">Send</button>
         </div>
 
         <p><strong>AI Reply:</strong></p>
@@ -80,6 +127,7 @@
     <script>
         const btn = document.getElementById('btn');
         const stopBtn = document.getElementById('stopBtn');
+        const stopSpeakBtn = document.getElementById('stopSpeakBtn');
         const sendBtn = document.getElementById('sendBtn');
         const statusEl = document.getElementById('status');
         const transcriptEl = document.getElementById('transcript');
@@ -89,10 +137,10 @@
 
         let recognition = null;
 
-        // Poll sensor data every 3s so users can see what AI will use
+        
         async function refreshSensor() {
             try {
-                const r = await fetch('/api/data');
+                const r = await fetch('/data');
                 const j = await r.json();
                 sensorJsonEl.textContent = JSON.stringify(j, null, 2);
             } catch (e) {
@@ -106,8 +154,37 @@
             return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
         }
 
+        // === 🆕 Text-to-speech helper with Google UK English Female
+            function speakText(text) {
+                if (!("speechSynthesis" in window)) return;
+                speechSynthesis.cancel(); // clear any ongoing speech
+                const utter = new SpeechSynthesisUtterance(text);
+
+                // force preferred voice
+                function setVoice() {
+                    const voices = speechSynthesis.getVoices();
+                    const googleUK = voices.find(v => v.name === "Google US English Female");
+                    if (googleUK) {
+                        utter.voice = googleUK;
+                        utter.lang = googleUK.lang; // match its language
+                    } else {
+                        console.log("Google UK English Female not found, retrying...");
+                        setTimeout(setVoice, 100);
+                        return;
+                    }
+                    speechSynthesis.speak(utter);
+                }
+
+                // in case voices aren’t loaded yet
+                if (speechSynthesis.getVoices().length === 0) {
+                    speechSynthesis.onvoiceschanged = setVoice;
+                } else {
+                    setVoice();
+                }
+            }
+
         async function askAI(query) {
-            const r = await fetch('/api/ask-ai', {
+            const r = await fetch('/ask-ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query })
@@ -117,7 +194,20 @@
                 throw new Error(j.error || `HTTP ${r.status}`);
             }
             const j = await r.json();
-            return j.response || '';
+            const reply = j.response || '';
+
+            function cleanResponseText(text) {
+                
+                return text.replace(/[*\-•]\s*/g, "") //for clean parsin
+                        .replace(/\s+/g, " ") //remove whitespace
+                        .trim();
+            }
+            const replyParsed = cleanResponseText(reply);
+
+            // 🆕 Speak the AI reply
+            if (replyParsed) speakText(replyParsed);
+
+            return reply;
         }
 
         // === Voice input ===
@@ -178,13 +268,13 @@
         stopBtn.onclick = () => {
             if (recognition) {
                 recognition.stop();
-                statusEl.textContent = 'Stopped manually';
+                statusEl.textContent = 'Stopped listening manually';
                 stopBtn.disabled = true;
                 btn.disabled = false;
             }
         };
 
-        // === 🆕 Handle text query ===
+        // === Handle text query ===
         sendBtn.onclick = async () => {
             const query = textInput.value.trim();
             if (!query) return;
