@@ -4,124 +4,265 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Voice → Health AI</title>
+    <title>Health AI Dashboard</title>
     <style>
-        body {
-            font-family: system-ui, Arial;
-            margin: 16px;
-            background-color: #121212;
-            /* Dark background */
-            color: #e0e0e0;
-            /* Light gray text */
-        }
-    
-        button {
-            padding: 12px 16px;
-            font-size: 16px;
-            border-radius: 10px;
-            margin-right: 8px;
-            background: #1e1e1e;
-            color: #e0e0e0;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
-    
-        button:hover {
-            background: #2a2a2a;
-        }
-    
-        button:active {
-            transform: scale(0.97);
-        }
-    
-        .card {
-            border: 1px solid #2c2c2c;
-            border-radius: 12px;
-            padding: 16px;
-            padding-bottom: 20px;
-            margin-top: 12px;
-            background: #1a1a1a;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-        }
-    
-        .ok {
-            color: #4caf50;
-           
-        }
-    
-        .err {
-            color: #ff5252;
-            
-        }
-    
-        #status {
-            margin-left: 8px;
-            font-weight: bold;
-        }
-    
-        #sensor pre {
+        * {
             margin: 0;
-            white-space: pre-wrap;
-            color: #b0b0b0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    
-        #textQuery {
-            width: 70%;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1e1e1e;
-            color: #f0f0f0;
-            outline: none;
-            transition: border 0.2s;
-        }
-    
-        #textQuery:focus {
-            border: 1px solid #4caf50;
-        }
-    
-        h2,
-        h3 {
-            color: #ffffff;
-        }
-    
-        strong {
-            color: #ffffff;
-        }
-        .button{
-            margin-top:10px;
-        }
-        
-    </style>
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .logo{
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            max-height:28%;
+            max-width: 28%;
+            
+        } 
+
+        .container {
+            min-width: auto;
+            margin: 0 auto;
+            display:flex;
+            justify-content:center;
+            flex-direction: column;
+            align-items: center;
+
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .card {
+            background: #111111;
+            border: 1px solid #222222;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1rem;
+            background: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        @media (min-width: 480px) {
+            button {
+                flex: none;
+            }
+        }
+
+        button:hover {
+            background: #252525;
+            border-color: #444444;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .status.ok {
+            color: #4ade80;
+        }
+
+        .status.err {
+            color: #f87171;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.75rem;
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+
+        .transcript,
+        .reply {
+            background: #0a0a0a;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #1a1a1a;
+            margin: 1rem 0;
+            min-height: 60px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .reply {
+            min-height: 100px;
+        }
+
+        .sensor-data {
+            background: #0a0a0a;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #1a1a1a;
+            overflow-x: auto;
+        }
+
+        .sensor-data pre {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: #a3a3a3;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: #e5e5e5;
+        }
+
+        
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #333333;
+        }
+
+        .indicator.active {
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                min-width: unset;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <h2>🎤 Voice + Keyboard → Health AI</h2>
+    <div class="container">
+        <!-- <h2>🎤 Health AI Dashboard</h2> -->
+        <img class="logo" src="spectra.jpg"/>
 
-    <div class="card">
-        <button id="btn" class="button">Start Speaking</button>
-        <button id="stopBtn" class="button" disabled>Stop Listening</button>
-        <button id="stopSpeakBtn" class="button">Stop Speaking</button>
-        <span id="status"></span>
+        <div class="grid">
+            <div class="card">
+                <div class="controls">
+                    <button id="btn">Start Speaking</button>
+                    <button id="stopBtn" disabled>Stop</button>
+                    <button id="stopSpeakBtn">Stop Speech</button>
+                </div>
 
-        <p><strong>Transcript:</strong> <span id="transcript">—</span></p>
+                <div class="status" id="statusContainer">
+                    <div class="indicator" id="indicator"></div>
+                    <span id="status">Ready</span>
+                </div>
 
-        
-        <div style="margin-top: 30px;">
-            <input id="textQuery" type="text" placeholder="Type your question…" />
-            <button id="sendBtn" style="margin-top: 10px">Send</button>
+                <div class="section-title">Transcript</div>
+                <div class="transcript" id="transcript">—</div>
+
+                <div class="input-group">
+                    <input id="textQuery" type="text" placeholder="Type your question…" />
+                    <button id="sendBtn">Send</button>
+                </div>
+
+                <div class="section-title">AI Response</div>
+                <div class="reply" id="reply">Waiting for input...</div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Sensor Data</div>
+                <div class="sensor-data">
+                    <pre id="sensorJson">Loading…</pre>
+                </div>
+            </div>
         </div>
-
-        <p><strong>AI Reply:</strong></p>
-        <div id="reply" class="card"></div>
-    </div>
-
-    <div id="sensor" class="card">
-        <h3>Latest Sensor Data</h3>
-        <pre id="sensorJson">Loading…</pre>
     </div>
 
     <script>
@@ -130,6 +271,8 @@
         const stopSpeakBtn = document.getElementById('stopSpeakBtn');
         const sendBtn = document.getElementById('sendBtn');
         const statusEl = document.getElementById('status');
+        const statusContainer = document.getElementById('statusContainer');
+        const indicator = document.getElementById('indicator');
         const transcriptEl = document.getElementById('transcript');
         const replyEl = document.getElementById('reply');
         const sensorJsonEl = document.getElementById('sensorJson');
@@ -137,7 +280,12 @@
 
         let recognition = null;
 
-        
+        function updateStatus(text, type = '') {
+            statusEl.textContent = text;
+            statusContainer.className = `status ${type}`;
+            indicator.className = `indicator ${type === 'ok' && text === 'Listening…' ? 'active' : ''}`;
+        }
+
         async function refreshSensor() {
             try {
                 const r = await fetch('/data');
@@ -154,34 +302,36 @@
             return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
         }
 
-        // === 🆕 Text-to-speech helper with Google UK English Female
-            function speakText(text) {
-                if (!("speechSynthesis" in window)) return;
-                speechSynthesis.cancel(); // clear any ongoing speech
-                const utter = new SpeechSynthesisUtterance(text);
+        function speakText(text) {
+            if (!("speechSynthesis" in window)) return;
+            speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
 
-                // force preferred voice
-                function setVoice() {
-                    const voices = speechSynthesis.getVoices();
-                    const googleUK = voices.find(v => v.name === "Google US English Female");
-                    if (googleUK) {
-                        utter.voice = googleUK;
-                        utter.lang = googleUK.lang; // match its language
-                    } else {
-                        console.log("Google UK English Female not found, retrying...");
-                        setTimeout(setVoice, 100);
-                        return;
-                    }
-                    speechSynthesis.speak(utter);
-                }
-
-                // in case voices aren’t loaded yet
-                if (speechSynthesis.getVoices().length === 0) {
-                    speechSynthesis.onvoiceschanged = setVoice;
+            function setVoice() {
+                const voices = speechSynthesis.getVoices();
+                const googleUK = voices.find(v => v.name === "Google US English Female");
+                if (googleUK) {
+                    utter.voice = googleUK;
+                    utter.lang = googleUK.lang;
                 } else {
-                    setVoice();
+                    setTimeout(setVoice, 100);
+                    return;
                 }
+                speechSynthesis.speak(utter);
             }
+
+            if (speechSynthesis.getVoices().length === 0) {
+                speechSynthesis.onvoiceschanged = setVoice;
+            } else {
+                setVoice();
+            }
+        }
+
+        stopSpeakBtn.onclick = () => {
+            if (speechSynthesis) {
+                speechSynthesis.cancel();
+            }
+        };
 
         async function askAI(query) {
             const r = await fetch('/ask-ai', {
@@ -197,27 +347,24 @@
             const reply = j.response || '';
 
             function cleanResponseText(text) {
-                
-                return text.replace(/[*\-•]\s*/g, "") //for clean parsin
-                        .replace(/\s+/g, " ") //remove whitespace
-                        .trim();
+                return text.replace(/[*\-•]\s*/g, "")
+                    .replace(/\s+/g, " ")
+                    .trim();
             }
             const replyParsed = cleanResponseText(reply);
 
-            // 🆕 Speak the AI reply
             if (replyParsed) speakText(replyParsed);
 
             return reply;
         }
 
-        // === Voice input ===
         btn.onclick = async () => {
-            replyEl.textContent = '';
+            replyEl.textContent = 'Waiting for input...';
             transcriptEl.textContent = '—';
 
             if (!browserSupportsSpeech()) {
-                statusEl.textContent = '';
-                alert('Your browser does not support SpeechRecognition. Use Chrome/Edge on Android.');
+                updateStatus('Speech not supported', 'err');
+                alert('Your browser does not support SpeechRecognition. Use Chrome/Edge.');
                 return;
             }
 
@@ -228,20 +375,18 @@
             recognition.maxAlternatives = 1;
 
             recognition.onstart = () => {
-                statusEl.textContent = 'Listening…';
-                statusEl.className = 'ok';
+                updateStatus('Listening…', 'ok');
                 btn.disabled = true;
                 stopBtn.disabled = false;
             };
             recognition.onerror = (e) => {
-                statusEl.textContent = `Error: ${e.error}`;
-                statusEl.className = 'err';
+                updateStatus(`Error: ${e.error}`, 'err');
                 btn.disabled = false;
                 stopBtn.disabled = true;
             };
             recognition.onend = () => {
                 if (statusEl.textContent.startsWith('Listening')) {
-                    statusEl.textContent = 'Stopped';
+                    updateStatus('Stopped');
                 }
                 btn.disabled = false;
                 stopBtn.disabled = true;
@@ -249,16 +394,14 @@
             recognition.onresult = async (ev) => {
                 const text = ev.results[0][0].transcript;
                 transcriptEl.textContent = text;
-                statusEl.textContent = 'Thinking…';
+                updateStatus('Processing…', 'ok');
                 try {
                     const ai = await askAI(text);
                     replyEl.textContent = ai;
-                    statusEl.textContent = 'Done';
-                    statusEl.className = 'ok';
+                    updateStatus('Complete', 'ok');
                 } catch (err) {
                     replyEl.textContent = `Failed: ${err.message}`;
-                    statusEl.textContent = 'Failed';
-                    statusEl.className = 'err';
+                    updateStatus('Failed', 'err');
                 }
             };
 
@@ -268,31 +411,35 @@
         stopBtn.onclick = () => {
             if (recognition) {
                 recognition.stop();
-                statusEl.textContent = 'Stopped listening manually';
+                updateStatus('Stopped');
                 stopBtn.disabled = true;
                 btn.disabled = false;
             }
         };
 
-        // === Handle text query ===
         sendBtn.onclick = async () => {
             const query = textInput.value.trim();
             if (!query) return;
             transcriptEl.textContent = query;
-            replyEl.textContent = '';
-            statusEl.textContent = 'Thinking…';
+            replyEl.textContent = 'Processing...';
+            updateStatus('Processing…', 'ok');
 
             try {
                 const ai = await askAI(query);
                 replyEl.textContent = ai;
-                statusEl.textContent = 'Done';
-                statusEl.className = 'ok';
+                updateStatus('Complete', 'ok');
+                textInput.value = '';
             } catch (err) {
                 replyEl.textContent = `Failed: ${err.message}`;
-                statusEl.textContent = 'Failed';
-                statusEl.className = 'err';
+                updateStatus('Failed', 'err');
             }
         };
+
+        textInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendBtn.click();
+            }
+        });
     </script>
 </body>
 

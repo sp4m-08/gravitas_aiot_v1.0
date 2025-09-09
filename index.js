@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-const apikey = '';
+const apikey = 'AIzaSyCok3rpe8lu5QruBF5J0fBlP28yFClqYIA';
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 console.log("Attempting to use API Key:",apikey); 
