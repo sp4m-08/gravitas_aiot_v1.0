@@ -13,12 +13,21 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            min-height: 100vh;
-            padding: 1rem;
-        }
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #000000; 
+    color: #ffffff;
+    min-height: 100vh;
+    padding: 1rem;
+    position: relative; 
+    background:
+        radial-gradient(circle at bottom left, rgba(0, 0, 139, 0.3) 0%, transparent 25%), /* Bottom-Left */
+        radial-gradient(circle at bottom right, rgba(0, 0, 139, 0.3) 0%, transparent 25%), /* Bottom-Right */
+        #000000; 
+
+    
+    background-attachment: fixed;
+}
+        
 
         .logo{
             display:flex;
@@ -59,7 +68,7 @@
         }
 
         .card {
-            background: #111111;
+            background: none;
             border: 1px solid #222222;
             border-radius: 8px;
             padding: 1.5rem;
@@ -227,8 +236,10 @@
 </head>
 
 <body>
+
+    <!-- html page to display the data -->
     <div class="container">
-        <!-- <h2>🎤 Health AI Dashboard</h2> -->
+       
         <img class="logo" src="spectra.jpg"/>
 
         <div class="grid">
@@ -266,6 +277,8 @@
     </div>
 
     <script>
+        //inside the script tag we write some javascript to make our interface interactive
+        //we select all our elements using their id, so we can manipulate their logic as we need
         const btn = document.getElementById('btn');
         const stopBtn = document.getElementById('stopBtn');
         const stopSpeakBtn = document.getElementById('stopSpeakBtn');
@@ -278,14 +291,17 @@
         const sensorJsonEl = document.getElementById('sensorJson');
         const textInput = document.getElementById('textQuery');
 
-        let recognition = null;
+        let recognition = null; //this is the speech recognition object
 
+        //updates the input status based on whether there is input query or not, ok - green, err - red
         function updateStatus(text, type = '') {
             statusEl.textContent = text;
             statusContainer.className = `status ${type}`;
             indicator.className = `indicator ${type === 'ok' && text === 'Listening…' ? 'active' : ''}`;
         }
 
+
+        //asynchronous function to fetch sensor data from /data endpoint and display it in formatted string
         async function refreshSensor() {
             try {
                 const r = await fetch('/data');
@@ -298,11 +314,17 @@
         refreshSensor();
         setInterval(refreshSensor, 3000);
 
+        
         function browserSupportsSpeech() {
             return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
         }
+        //checks if your browser supports speech recognition or not
+        
 
-        function speakText(text) {
+
+        //this functions converts ai response to voice speech output using Web Speech API
+        //basically voice output
+        function speakText(text){
             if (!("speechSynthesis" in window)) return;
             speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(text);
@@ -327,12 +349,16 @@
             }
         }
 
+        //speech input is not taken once the stop button is clicked
         stopSpeakBtn.onclick = () => {
             if (speechSynthesis) {
                 speechSynthesis.cancel();
             }
         };
 
+
+
+        //this function sends user request to /ask-ai endpoint and displays the ai response
         async function askAI(query) {
             const r = await fetch('/ask-ai', {
                 method: 'POST',
@@ -346,7 +372,7 @@
             const j = await r.json();
             const reply = j.response || '';
 
-            function cleanResponseText(text) {
+            function cleanResponseText(text) { //formatting response in readable way
                 return text.replace(/[*\-•]\s*/g, "")
                     .replace(/\s+/g, " ")
                     .trim();
@@ -358,22 +384,26 @@
             return reply;
         }
 
+
+        //onclick - this is your event handler- meaning upon clicking an action is taking place
+        //speech to text using browser's in-built: Web Speech API
+        //SpeechRecognition object is created and it listens for input
         btn.onclick = async () => {
-            replyEl.textContent = 'Waiting for input...';
+            replyEl.textContent = 'Waiting for input...'; 
             transcriptEl.textContent = '—';
 
-            if (!browserSupportsSpeech()) {
+            if (!browserSupportsSpeech()) { //check if browser supports speech
                 updateStatus('Speech not supported', 'err');
                 alert('Your browser does not support SpeechRecognition. Use Chrome/Edge.');
                 return;
             }
 
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SR();
+            recognition = new SR(); //here we are creating the object that will listen to speech
             recognition.lang = 'en-US';
             recognition.interimResults = false;
             recognition.maxAlternatives = 1;
-
+            
             recognition.onstart = () => {
                 updateStatus('Listening…', 'ok');
                 btn.disabled = true;
@@ -391,12 +421,19 @@
                 btn.disabled = false;
                 stopBtn.disabled = true;
             };
+
+            {/*This is the most important handler. When a user stops speaking 
+                and the browser has a final transcript, 
+                this is called. It takes and displays user's query 
+                and then calls the askAI function to send the query to the server 
+                and process the AI's response. */}
+                
             recognition.onresult = async (ev) => {
                 const text = ev.results[0][0].transcript;
                 transcriptEl.textContent = text;
                 updateStatus('Processing…', 'ok');
                 try {
-                    const ai = await askAI(text);
+                    const ai = await askAI(text); //now user input sent to ai
                     replyEl.textContent = ai;
                     updateStatus('Complete', 'ok');
                 } catch (err) {
@@ -408,7 +445,7 @@
             recognition.start();
         };
 
-        stopBtn.onclick = () => {
+        stopBtn.onclick = () => { //stops the speech listening
             if (recognition) {
                 recognition.stop();
                 updateStatus('Stopped');
@@ -417,6 +454,7 @@
             }
         };
 
+        //event handler button for sending manual text input
         sendBtn.onclick = async () => {
             const query = textInput.value.trim();
             if (!query) return;
@@ -424,7 +462,7 @@
             replyEl.textContent = 'Processing...';
             updateStatus('Processing…', 'ok');
 
-            try {
+            try { //same process as above
                 const ai = await askAI(query);
                 replyEl.textContent = ai;
                 updateStatus('Complete', 'ok');

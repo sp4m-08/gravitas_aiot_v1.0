@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); 
 const bodyParser = require('body-parser');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -26,18 +26,22 @@ let lastAIResponse = "";
 app.get('/', (req, res) => {
     res.status(200).send('Server running!');
 })
+
+//in arduino code, esp is SENDING sensor data to /data, we are receiving that data here
 app.post('/data', (req, res) => {
   latestData = req.body || {};
   console.log('Received sensor data:', latestData);
   res.status(200).send('Data received');
 });
 
-// Optional: allow page/ESP to read the latest sensor data
+// allow page to read the latest sensor data
 app.get('/data', (req, res) => {
   res.json(latestData || {});
 });
 
 
+
+// **important**
 app.post('/ask-ai', async (req, res) => {
   const userQuery = (req.body && req.body.query) ? String(req.body.query) : "";
 
@@ -83,7 +87,7 @@ app.get('/last-ai', (req, res) => {
 });
 
 
-app.get('/', (req, res) => {
+app.get('/', (req, res) => {  //generate user interface
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
