@@ -14,34 +14,39 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-const apikey = 'AIzaSyCok3rpe8lu5QruBF5J0fBlP28yFClqYIA';
+const apikey = 'your-api-key';
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-console.log("Attempting to use API Key:",apikey); 
+
+console.log("Attempting to use API Key:", apikey); 
 
 let latestData = {};
 let lastAIResponse = "";
 
 
-app.get('/', (req, res) => {
-    res.status(200).send('Server running!');
-})
-
-//in arduino code, esp is SENDING sensor data to /data, we are receiving that data here
 app.post('/data', (req, res) => {
   latestData = req.body || {};
+
+  
+  if (latestData.pressure !== undefined) {
+    latestData.pressure = Number(latestData.pressure).toFixed(2);
+  }
+
+  
+  if (latestData.temperature !== undefined) {
+    latestData.temperature = Number(latestData.temperature).toFixed(2);
+  }
+
   console.log('Received sensor data:', latestData);
   res.status(200).send('Data received');
 });
 
-// allow page to read the latest sensor data
+
 app.get('/data', (req, res) => {
   res.json(latestData || {});
 });
 
-
-
-// **important**
+// AI
 app.post('/ask-ai', async (req, res) => {
   const userQuery = (req.body && req.body.query) ? String(req.body.query) : "";
 
@@ -52,22 +57,20 @@ app.post('/ask-ai', async (req, res) => {
     return res.status(400).send({ error: 'Empty query' });
   }
 
-  //prompt template can be customised to anything
-  const prompt = `You are a health assistant AI. Here is the user health data:  
-- Heart Rate: ${latestData.heartRate}
-- SpO₂: ${latestData.spo2}
-- Temp: ${latestData.temperature}°C
+  const prompt = `You are a health assistant AI. Here is the latest user health data:
+- Heart Rate: ${latestData.heartRate} bpm
+- SpO₂: ${latestData.spo2}%
 - Steps: ${latestData.steps}
+- Pressure: ${latestData.pressure} hPa
+- Ambient Temperature: ${latestData.temperature}°C
 - Time: ${latestData.time}
 
-User asked: "${userQuery}"
 
-Provide a helpful and concise response based on this health context.`;
+User asked: "${userQuery}"`;
 
   try {
     const result = await model.generateContent(prompt);
 
-    
     const response = result?.response;
     const text = typeof response?.text === 'function'
       ? response.text()
@@ -82,16 +85,17 @@ Provide a helpful and concise response based on this health context.`;
   }
 });
 
+//  AI response
 app.get('/last-ai', (req, res) => {
   res.json({ response: lastAIResponse || "" });
 });
 
-
-app.get('/', (req, res) => {  //generate user interface
+// Serve frontend
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
 
+app.listen(port, "0.0.0.0", () => {
+  console.log(` Server running at http://localhost:${port}`);
+});
