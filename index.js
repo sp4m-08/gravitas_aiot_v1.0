@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-
 // Initialize Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -13,31 +12,21 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-const apikey = process.env.API_KEY; //
+const apikey = process.env.API_KEY;
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-console.log("Attempting to use API Key:",apikey); 
+console.log("Attempting to use API Key:", apikey); 
 
 let latestData = {};
 let lastAIResponse = "";
 
-
-// app.get('/', (req, res) => {
-//     res.status(200).send('Server running!');
-// })
-
-//in arduino code, esp is SENDING sensor data to /data, we are receiving that data here
 app.post('/data', async (req, res) => {
   latestData = req.body || {};
   console.log('Received sensor data:', latestData);
@@ -45,11 +34,11 @@ app.post('/data', async (req, res) => {
   const { error } = await supabase
     .from('sensor_readings')
     .insert([{
-      heart_rate:  latestData.heartRate,
-      spo2:        latestData.spo2,
-      temperature: latestData.temperature,
-      pressure:    latestData.pressure,
-      steps:       latestData.steps,
+      heart_rate:   latestData.heartRate,
+      spo2:         latestData.spo2,
+      temperature:  latestData.temperature,
+      pressure:     latestData.pressure,
+      steps:        latestData.steps,
       reading_time: latestData.time
     }]);
 
@@ -58,16 +47,34 @@ app.post('/data', async (req, res) => {
   res.status(200).send('Data received');
 });
 
-// allow page to read the latest sensor data
 app.get('/data', (req, res) => {
   res.json(latestData || {});
 });
 
-
-
-// **important**
 app.post('/ask-ai', async (req, res) => {
   const userQuery = (req.body && req.body.query) ? String(req.body.query) : "";
+
+  // If latestData is empty, fetch latest from Supabase
+  if (!latestData || Object.keys(latestData).length === 0) {
+    const { data, error } = await supabase
+      .from('sensor_readings')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (data) {
+      latestData = {
+        heartRate:   data.heart_rate,
+        spo2:        data.spo2,
+        temperature: data.temperature,
+        pressure:    data.pressure,
+        steps:       data.steps,
+        time:        data.reading_time
+      };
+    }
+    if (error) console.error('Supabase fetch error:', error);
+  }
 
   if (!latestData || Object.keys(latestData).length === 0) {
     return res.status(400).send({ error: 'No health data available yet.' });
@@ -76,7 +83,6 @@ app.post('/ask-ai', async (req, res) => {
     return res.status(400).send({ error: 'Empty query' });
   }
 
-  //prompt template can be customised to anything
   const prompt = `You are a health assistant AI. Here is the user health data:  
 - Heart Rate: ${latestData.heartRate}
 - SpO₂: ${latestData.spo2}
@@ -91,7 +97,6 @@ Provide a helpful and concise response based on this health context.`;
   try {
     const result = await model.generateContent(prompt);
 
-    
     const response = result?.response;
     const text = typeof response?.text === 'function'
       ? response.text()
@@ -110,8 +115,7 @@ app.get('/last-ai', (req, res) => {
   res.json({ response: lastAIResponse || "" });
 });
 
-
-app.get('/', (req, res) => {  //generate user interface
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
