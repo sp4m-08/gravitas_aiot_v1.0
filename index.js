@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const apikey = process.env.API_KEY;
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-console.log("Attempting to use API Key:", apikey); 
+console.log("Attempting to use API Key:", apikey ? `${apikey.slice(0, 6)}...${apikey.slice(-4)}` : "NOT SET");
 
 let latestData = {};
 let lastAIResponse = "";
