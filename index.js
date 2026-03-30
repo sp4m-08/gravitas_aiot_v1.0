@@ -1,9 +1,18 @@
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
+
+
+// Initialize Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const express = require('express');
 const cors = require('cors'); 
 const bodyParser = require('body-parser');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config();
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,14 +33,28 @@ let latestData = {};
 let lastAIResponse = "";
 
 
-app.get('/', (req, res) => {
-    res.status(200).send('Server running!');
-})
+// app.get('/', (req, res) => {
+//     res.status(200).send('Server running!');
+// })
 
 //in arduino code, esp is SENDING sensor data to /data, we are receiving that data here
-app.post('/data', (req, res) => {
+app.post('/data', async (req, res) => {
   latestData = req.body || {};
   console.log('Received sensor data:', latestData);
+
+  const { error } = await supabase
+    .from('sensor_readings')
+    .insert([{
+      heart_rate:  latestData.heartRate,
+      spo2:        latestData.spo2,
+      temperature: latestData.temperature,
+      pressure:    latestData.pressure,
+      steps:       latestData.steps,
+      reading_time: latestData.time
+    }]);
+
+  if (error) console.error('Supabase insert error:', error);
+
   res.status(200).send('Data received');
 });
 
