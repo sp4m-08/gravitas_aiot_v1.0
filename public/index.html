@@ -148,6 +148,44 @@
             outline: none;
             border-color: #4ade80;
         }
+        /* Fall Alert Styling */
+.fall-alert {
+    width: 100%;
+    max-width: 800px;
+    background: rgba(220, 38, 38, 0.2);
+    border: 2px solid #dc2626;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: alertPulse 1.5s infinite;
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.alert-icon {
+    font-size: 2.5rem;
+}
+
+.alert-text strong {
+    font-size: 1.25rem;
+    color: #ef4444;
+    display: block;
+}
+
+.alert-text p {
+    color: #fca5a5;
+    margin-top: 0.25rem;
+}
+
+@keyframes alertPulse {
+    0% { border-color: #dc2626; box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+    50% { border-color: #f87171; box-shadow: 0 0 20px 10px rgba(220, 38, 38, 0); }
+    100% { border-color: #dc2626; box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
 
         .transcript,
         .reply {
@@ -243,6 +281,15 @@
     <div class="container">
 
         <img class="logo" src="watch2.png" /> 
+        <div id="fallAlert" class="fall-alert" style="display: none;">
+            <div class="alert-content">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-text">
+                    <strong>CRITICAL: FALL DETECTED</strong>
+                    <p id="fallDetails">Location: Unknown</p>
+                </div>
+            </div>
+        </div>
 
         <div class="grid">
             <div class="card">
@@ -304,15 +351,27 @@
 
 
         //asynchronous function to fetch sensor data from /data endpoint and display it in formatted string
-        async function refreshSensor() {
-            try {
-                const r = await fetch('/data');
-                const j = await r.json();
-                sensorJsonEl.textContent = JSON.stringify(j, null, 2);
-            } catch (e) {
-                sensorJsonEl.textContent = 'Error loading sensor data';
+        const fallAlertEl = document.getElementById('fallAlert');
+            const fallDetailsEl = document.getElementById('fallDetails');
+
+            async function refreshSensor() {
+                try {
+                    const r = await fetch('/data');
+                    const j = await r.json();
+                    sensorJsonEl.textContent = JSON.stringify(j, null, 2);
+
+                    // Alert logic: Check for fall_detected boolean
+                    if (j.fall_detected === true) {
+                        fallAlertEl.style.display = 'block';
+                        fallDetailsEl.textContent = `Location: ${j.location || 'Unknown Room'}`;
+                    } else {
+                        fallAlertEl.style.display = 'none';
+                    }
+
+                } catch (e) {
+                    sensorJsonEl.textContent = 'Error loading sensor data';
+                }
             }
-        }
         refreshSensor();
         setInterval(refreshSensor, 3000);
 
